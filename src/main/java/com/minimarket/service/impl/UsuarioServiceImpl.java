@@ -5,6 +5,7 @@ import com.minimarket.repository.UsuarioRepository;
 import com.minimarket.security.util.XssSanitizerUtil;
 import com.minimarket.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,6 +16,9 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public List<Usuario> findAll() {
@@ -33,9 +37,16 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public Usuario save(Usuario usuario) {
-        if (usuario.getUsername() != null) {
-            usuario.setUsername(XssSanitizerUtil.sanitizeInput(usuario.getUsername()));
+
+        if (usuario.getUsername() == null || usuario.getUsername().trim().isEmpty() ||
+                usuario.getPassword() == null || usuario.getPassword().trim().isEmpty() ||
+                usuario.getRoles() == null || usuario.getRoles().isEmpty()) {
+            throw new IllegalArgumentException("Datos obligatorios del usuario incompletos");
         }
+
+        usuario.setUsername(XssSanitizerUtil.sanitizeInput(usuario.getUsername()));
+        usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+
         return usuarioRepository.save(usuario);
     }
 
